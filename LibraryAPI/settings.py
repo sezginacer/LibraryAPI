@@ -25,8 +25,7 @@ SECRET_KEY = '$9et@d^w8d17xuy=78xt#0kw4u=24!-3a9!203t=0jcghb^n99'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -37,6 +36,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
+    'rest_framework',
+    'rest_framework.authtoken',
     'main',
 ]
 
@@ -51,6 +53,16 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'LibraryAPI.urls'
+"""
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
+"""
 
 TEMPLATES = [
     {
