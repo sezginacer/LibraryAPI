@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import requests
 import getpass
-import json
 
 token_url = 'http://localhost:8000/get_access_token/'
 token = None
@@ -30,8 +29,7 @@ while not token:
         print('no such user!')
 
 headers = {'Authorization': 'Token {}'.format(token)}
-exit = False
-while not exit:
+while True:
     print(choices)
     choice = input('Enter your choice: ')
     if choice == '5':
