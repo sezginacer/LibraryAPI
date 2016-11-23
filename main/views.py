@@ -6,8 +6,6 @@ from rest_framework import status
 from django.contrib.auth import authenticate, login, logout
 
 from datetime import datetime
-# from jsonview.decorators import json_view
-# from django.utils.decorators import method_decorator
 from main.models import Book, Author
 
 # Create your views here.
@@ -29,7 +27,8 @@ class LoginAPIView(APIView):
             return Response({'error': 'already loggedin as {}'.format(request.user.username)},
                             status=status.HTTP_400_BAD_REQUEST)
         if 'username' not in request.POST or 'password' not in request.POST:
-            return Response({'error': 'username or password missing!'})
+            return Response({'error': 'username or password missing!'},
+                            status=status.HTTP_401_UNAUTHORIZED)
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
@@ -190,39 +189,11 @@ class LibraryView(APIView):
         if len(request.FILES) == 0:
             return Response({'error': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
         csv_data = ''
-        try:
-            for f in request.FILES.values():
-                csv_data += f.read().decode("utf-8").strip()
-            csv_lines = csv_data.strip().split('\n')
-            for line in csv_lines:
-                b = Book()
-                infos = line.strip().split(',')
-                b.title = infos[0]
-                b.lc_classification = infos[1]
-                index = 2
-                b.save()
-                while index < len(infos):
-                    a, _ = Author.objects.get_or_create(
-                        name=infos[index],
-                        surname=infos[index + 1],
-                        birth_date=datetime.strptime(infos[index + 2], '%Y-%m-%d')
-                    )
-                    b.authors.add(a)
-                    index += 3
-                b.save()
-        except Exception:
-            return Response({'error': 'cannot read file(s) uploaded'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        return Response({'message': 'books and authors created successfully.'})
-
-    def patch(self, request):
-        if len(request.FILES) == 0:
-            return Response({'error': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        csv_data = ''
-        try:
-            for f in request.FILES.values():
-                csv_data += f.read().decode("utf-8").strip()
-            csv_lines = csv_data.strip().split('\n')
-            for line in csv_lines:
+        for f in request.FILES.values():
+            csv_data += f.read().decode('utf-8').strip() + '\n'
+        csv_lines = csv_data.strip().split('\n')
+        for line in csv_lines:
+            try:
                 infos = line.strip().split(',')
                 b, _ = Book.objects.get_or_create(
                     title=infos[0],
@@ -238,8 +209,38 @@ class LibraryView(APIView):
                     b.authors.add(a)
                     index += 3
                 b.save()
-        except:
-            return Response({'error': 'cannot read file(s) uploaded'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            except Exception as err:
+                Author.objects.all().delete()
+                Book.objects.all().delete()
+                return Response({'error': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response({'message': 'books and authors created successfully.'})
+
+    def patch(self, request):
+        if len(request.FILES) == 0:
+            return Response({'error': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        csv_data = ''
+        for f in request.FILES.values():
+            csv_data += f.read().decode('utf-8').strip()
+        csv_lines = csv_data.strip().split('\n')
+        for line in csv_lines:
+            try:
+                infos = line.strip().split(',')
+                b, _ = Book.objects.get_or_create(
+                    title=infos[0],
+                    lc_classification=infos[1]
+                )
+                index = 2
+                while index < len(infos):
+                    a, _ = Author.objects.get_or_create(
+                        name=infos[index],
+                        surname=infos[index + 1],
+                        birth_date=datetime.strptime(infos[index + 2], '%Y-%m-%d')
+                    )
+                    b.authors.add(a)
+                    index += 3
+                b.save()
+            except Exception as err:
+                return Response({'error': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
         return Response({'message': 'books and authors created successfully.'})
 
 

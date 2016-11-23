@@ -10,9 +10,8 @@ name_list = json.load(names)
 book_list = json.load(books)
 
 for i in range(999):
-    a = random.randint(0, 999)
-    title = book_list[a]["title"].strip().replace(',', '')
-    lc = book_list[a]["lc"].strip().replace(',', '')
+    title = book_list[i]["title"].strip().replace(',', '')
+    lc = book_list[i]["lc"].strip().replace(',', '')
     b = random.randint(1, 3)
     writer_list = []
     for i in range(b):

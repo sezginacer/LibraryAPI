@@ -16,6 +16,9 @@ class Author(models.Model):
     def __str__(self):
         return self.name + ' ' + self.surname
 
+    class Meta:
+        unique_together = ('name', 'surname', 'birth_date')
+
 
 class Book(models.Model):
 
@@ -25,6 +28,9 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        unique_together = ('title', 'lc_classification')
 
 
 # This code is triggered whenever a new user has been created and saved to the database
