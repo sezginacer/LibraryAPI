@@ -4,6 +4,7 @@ from rest_framework import authentication, permissions
 from rest_framework import status
 
 from django.contrib.auth import authenticate, login, logout
+from django.db import IntegrityError
 
 from datetime import datetime
 from main.models import Book, Author
@@ -15,6 +16,8 @@ _authentication_classes = (authentication.TokenAuthentication,
                            authentication.SessionAuthentication,
                            authentication.BasicAuthentication)
 _permission_classes = (permissions.IsAuthenticated,)
+
+# _permission_classes = (permissions.AllowAny,)
 
 
 class LoginAPIView(APIView):
@@ -196,14 +199,14 @@ class LibraryView(APIView):
             try:
                 infos = line.strip().split(',')
                 b, _ = Book.objects.get_or_create(
-                    title=infos[0],
+                    title=infos[0].title(),
                     lc_classification=infos[1]
                 )
                 index = 2
                 while index < len(infos):
                     a, _ = Author.objects.get_or_create(
-                        name=infos[index],
-                        surname=infos[index + 1],
+                        name=infos[index].title(),
+                        surname=infos[index + 1].upper(),
                         birth_date=datetime.strptime(infos[index + 2], '%Y-%m-%d')
                     )
                     b.authors.add(a)
@@ -213,7 +216,7 @@ class LibraryView(APIView):
                 Author.objects.all().delete()
                 Book.objects.all().delete()
                 return Response({'error': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        return Response({'message': 'books and authors created successfully.'})
+        return Response({'detail': 'books and authors created successfully.'})
 
     def patch(self, request):
         if len(request.FILES) == 0:
@@ -226,14 +229,14 @@ class LibraryView(APIView):
             try:
                 infos = line.strip().split(',')
                 b, _ = Book.objects.get_or_create(
-                    title=infos[0],
+                    title=infos[0].title(),
                     lc_classification=infos[1]
                 )
                 index = 2
                 while index < len(infos):
                     a, _ = Author.objects.get_or_create(
-                        name=infos[index],
-                        surname=infos[index + 1],
+                        name=infos[index].title(),
+                        surname=infos[index + 1].upper(),
                         birth_date=datetime.strptime(infos[index + 2], '%Y-%m-%d')
                     )
                     b.authors.add(a)
@@ -241,7 +244,7 @@ class LibraryView(APIView):
                 b.save()
             except Exception as err:
                 return Response({'error': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        return Response({'message': 'books and authors created successfully.'})
+        return Response({'detail': 'books and authors created successfully.'})
 
 
 class BookListOrAddView(APIView):
@@ -280,14 +283,14 @@ class BookListOrAddView(APIView):
         try:
             data = csv_data.strip().split(',')
             b, _ = Book.objects.get_or_create(
-                title=data[0],
+                title=data[0].title(),
                 lc_classification=data[1]
             )
             index = 2
             while index < len(data):
                 a, _ = Author.objects.get_or_create(
-                    name=data[index],
-                    surname=data[index + 1],
+                    name=data[index].title(),
+                    surname=data[index + 1].upper(),
                     birth_date=datetime.strptime(data[index + 2], '%Y-%m-%d')
                 )
                 b.authors.add(a)
@@ -335,8 +338,8 @@ class AuthorListOrAddView(APIView):
         try:
             data = csv_data.strip().split(',')
             a, _ = Author.objects.get_or_create(
-                name=data[0],
-                surname=data[1],
+                name=data[0].title(),
+                surname=data[1].upper(),
                 birth_date=data[2]
             )
         except IndexError:
@@ -369,13 +372,65 @@ class BookDetailOrUpdateView(APIView):
                 })
             data['authors'] = authors
             return Response(data)
-        return Response({'error': 'no such book'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'no such book!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        pass
+        if not Book.objects.filter(pk=pk).exists():
+            return Response({'error': 'no such book!'}, status=status.HTTP_404_NOT_FOUND)
+        b = Book.objects.get(pk=pk)
+        aus = [author for author in b.authors.all()]
+        try:
+            infos = request.data.get('infos').strip().split(',')
+            b.title = infos[0].title()
+            b.lc_classification = infos[1]
+            b.save()
+            index = 2
+            while index < len(infos):
+                a, _ = Author.objects.get_or_create(
+                    name=infos[index].title(), surname=infos[index + 1].upper(),
+                    birth_date=datetime.strptime(infos[index + 2], '%Y-%m-%d')
+                )
+                index += 3
+                b.authors.add(a)
+            for author in aus:
+                if author.books.count() == 1:
+                    author.delete()
+        except IntegrityError:
+            return Response({'error': 'attempt to add existing data!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response({'error': 'failed to update object!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'book updated successfully.'})
 
     def put(self, request, pk):
-        pass
+        if not Book.objects.filter(pk=pk).exists():
+            return Response({'error': 'no such book!'}, status=status.HTTP_404_NOT_FOUND)
+        b = Book.objects.get(pk=pk)
+        aus = [author for author in b.authors.all()]
+        try:
+            infos = request.data.get('infos').strip().split(',')
+            b.title = infos[0]
+            b.lc_classification = infos[1]
+            b.save()
+            index = 2
+            while index < len(infos):
+                a, _ = Author.objects.get_or_create(
+                    name=infos[index].title(), surname=infos[index + 1].upper(),
+                    birth_date=datetime.strptime(infos[index + 2], '%Y-%m-%d')
+                )
+                index += 3
+                b.authors.add(a)
+            for author in aus:
+                if author.books.count():
+                    author.delete()
+        except IntegrityError:
+            return Response({'error': 'attempt to add existing book!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response({'error': 'failed to update object!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'book updated successfully.'})
 
 
 class AuthorDetailOrUpdateView(APIView):
@@ -404,7 +459,35 @@ class AuthorDetailOrUpdateView(APIView):
         return Response({'error': 'no such author'}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        pass
+        if not Author.objects.filter(pk=pk).exists():
+            return Response({'error': 'no such author!'}, status=status.HTTP_404_NOT_FOUND)
+        a = Author.objects.get(pk=pk)
+        try:
+            infos = request.data.get('infos').strip().split(',')
+            a.name = infos[0].title()
+            a.surname = infos[1].upper()
+            a.birth_date = datetime.strptime(infos[2], '%Y-%m-%d')
+            a.save()
+        except IntegrityError:
+            return Response({'error': 'attempt to add existing author!'},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        except Exception:
+            return Response({'error': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'author updated successfully!'})
 
     def put(self, request, pk):
-        pass
+        if not Author.objects.filter(pk=pk).exists():
+            return Response({'error': 'no such author!'}, status=status.HTTP_404_NOT_FOUND)
+        a = Author.objects.get(pk=pk)
+        try:
+            infos = request.data.get('infos').strip().split(',')
+            a.name = infos[0].title()
+            a.surname = infos[1].upper()
+            a.birth_date = datetime.strptime(infos[2], '%Y-%m-%d')
+            a.save()
+        except IntegrityError:
+            return Response({'error': 'attempt to add existing author!'},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+        except Exception:
+            return Response({'error': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'author updated successfully!'})
