@@ -9,6 +9,7 @@ This is a project for MetGlobal Academy
 |  token/       |     POST      |   Gives the access token for the user                         |   No                     |
 |  login/       |     POST      |   Logins the user                                             |   No                     |
 |  logout/      |     GET       |   Logouts the user                                            |   No                     |
+|  signup/      |     POST      |   Registers user                                              |   No                     |
 |  library/     |     POST      |   Deletes all books and authors, create new library           |   Yes                    |
 |  library/     |     PATCH     |   Keeps existing books and authors adds new books and authors |   Yes                    |
 |  book/        |     GET       |   Gives all books                                             |   Yes                    |     
@@ -21,3 +22,7 @@ This is a project for MetGlobal Academy
 |  author/{id}/ |     GET       |   Gives the author with given ID                              |   Yes                    |
 |  author/{id}/ |     PATCH     |   Updates the author with given ID                            |   Yes                    |
 |  author/{id}/ |     PUT       |   Updates the author with given ID                            |   Yes                    |
+
+### Access to API
+It's a must to signup to do library operations. An API access token will be given after signup. In
+order to get token for registered user, `token/` endpoint can be used.
