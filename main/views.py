@@ -70,7 +70,7 @@ class GetTokenView(APIView):
 class IndexView(APIView):
 
     authentication_classes = _authentication_classes
-    permission_classes = ()
+    permission_classes = (permissions.AllowAny,)
 
     def get(self, request):
         endpoints = [
