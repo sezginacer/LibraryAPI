@@ -4,7 +4,7 @@ This is a project for MetGlobal Academy
 ### API Reference
 
 |    Endpoint   |  HTTP Request |                     Description                               |  Authentication Required |
-| :-----------  |:-------------:| :------------------------------------------------------------:| :----------------------: |
+| :-----------  |:-------------:| :-----------------------------------------------------------: | :----------------------: |
 |  /            |     GET       |   Gives available endpoints and HTTP methods                  |   No                     |
 |  token/       |     POST      |   Gives the access token for the user                         |   No                     |
 |  login/       |     POST      |   Logins the user                                             |   No                     |
