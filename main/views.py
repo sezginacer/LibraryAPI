@@ -5,6 +5,7 @@ from rest_framework import status
 
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.contrib.auth.models import User
 
 from datetime import datetime
 from main.models import Book, Author
@@ -31,14 +32,14 @@ class LoginAPIView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
         if 'username' not in request.POST or 'password' not in request.POST:
             return Response({'detail': 'username or password missing!'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+                            status=status.HTTP_400_BAD_REQUEST)
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
             return Response({'detail': 'login successful!'})
-        return Response({'detail': 'no such user!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'username or password wrong!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutAPIView(APIView):
@@ -53,6 +54,23 @@ class LogoutAPIView(APIView):
         return Response({'detail': 'no logout required'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class SignupView(APIView):
+
+    authentication_classes = _authentication_classes
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        if 'username' not in request.POST or 'password' not in request.POST:
+            return Response({'detail': 'username or password missing!'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if User.objects.filter(username=username).exists():
+            return Response({'detail': 'username already taken!'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.create(username=username, password=password)
+        return Response({'detail': 'signup successful!', 'token': user.auth_token.key})
+
+
 class GetTokenView(APIView):
 
     authentication_classes = _authentication_classes
@@ -63,7 +81,7 @@ class GetTokenView(APIView):
         password = request.POST.get('password', '')
         user = authenticate(username=username, password=password)
         if user:
-            return Response({'token': user.auth_token.key})
+            return Response({'detail': 'successful!', 'token': user.auth_token.key})
         return Response({'detail': 'authentication failed!'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -190,7 +208,7 @@ class LibraryView(APIView):
         Author.objects.all().delete()
         Book.objects.all().delete()
         if len(request.FILES) == 0:
-            return Response({'detail': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({'detail': 'no csv file supplied!'}, status=status.HTTP_400_BAD_REQUEST)
         csv_data = ''
         for f in request.FILES.values():
             csv_data += f.read().decode('utf-8').strip() + '\n'
@@ -212,15 +230,19 @@ class LibraryView(APIView):
                     b.authors.add(a)
                     index += 3
                 b.save()
+            except IndexError:
+                Author.objects.all().delete()
+                Book.objects.all().delete()
+                return Response({'detail': 'missing field!'}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
                 Author.objects.all().delete()
                 Book.objects.all().delete()
-                return Response({'detail': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'books and authors created successfully.'})
 
     def patch(self, request):
         if len(request.FILES) == 0:
-            return Response({'detail': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({'detail': 'no csv file supplied!'}, status=status.HTTP_400_BAD_REQUEST)
         csv_data = ''
         for f in request.FILES.values():
             csv_data += f.read().decode('utf-8').strip()
@@ -242,8 +264,10 @@ class LibraryView(APIView):
                     b.authors.add(a)
                     index += 3
                 b.save()
+            except IndexError:
+                return Response({'detail': 'missing field!'}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
-                return Response({'detail': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({'detail': err}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'books and authors created successfully.'})
 
 
@@ -393,8 +417,10 @@ class BookDetailOrUpdateView(APIView):
                 index += 3
                 b.authors.add(a)
             for author in aus:
-                if author.books.count() == 1:
-                    author.delete()
+                b.authors.remove(author)
+        except IndexError:
+            return Response({'detail': 'missing field!'},
+                            status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
             return Response({'detail': 'attempt to add existing data!'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -422,8 +448,10 @@ class BookDetailOrUpdateView(APIView):
                 index += 3
                 b.authors.add(a)
             for author in aus:
-                if author.books.count():
-                    author.delete()
+                b.authors.remove(author)
+        except IndexError:
+            return Response({'detail': 'missing field!'},
+                            status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
             return Response({'detail': 'attempt to add existing book!'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -468,9 +496,12 @@ class AuthorDetailOrUpdateView(APIView):
             a.surname = infos[1].upper()
             a.birth_date = datetime.strptime(infos[2], '%Y-%m-%d')
             a.save()
+        except IndexError:
+            return Response({'detail': 'missing field!'},
+                            status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
             return Response({'detail': 'attempt to add existing author!'},
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
+                            status=status.HTTP_400_BAD_REQUEST)
         except Exception:
             return Response({'detail': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'author updated successfully!'})
@@ -485,9 +516,12 @@ class AuthorDetailOrUpdateView(APIView):
             a.surname = infos[1].upper()
             a.birth_date = datetime.strptime(infos[2], '%Y-%m-%d')
             a.save()
+        except IndexError:
+            return Response({'detail': 'missing field!'},
+                            status=status.HTTP_400_BAD_REQUEST)
         except IntegrityError:
             return Response({'detail': 'attempt to add existing author!'},
-                            status=status.HTTP_406_NOT_ACCEPTABLE)
+                            status=status.HTTP_400_BAD_REQUEST)
         except Exception:
             return Response({'detail': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'author updated successfully!'})

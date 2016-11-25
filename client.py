@@ -4,6 +4,8 @@ import getpass
 
 url = 'http://localhost:8000/'
 token_url = url + 'token/'
+signup_url = url + 'signup/'
+
 token = None
 
 choices = """
@@ -20,18 +22,36 @@ choices = """
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 """
 while not token:
-    username = input('Enter your username: ')
-    password = getpass.getpass(prompt="Enter your password: ")
-    try:
-        response = requests.post(token_url, data={'username': username, 'password': password})
-    except requests.exceptions.ConnectionError:
-        print('connection error!')
+    opt = input('signin (i), signup (u) or exit (e): ')
+    if opt == 'i':
+        username = input('Enter your username: ')
+        password = getpass.getpass(prompt="Enter your password: ")
+        try:
+            response = requests.post(token_url, data={'username': username, 'password': password})
+        except requests.exceptions.ConnectionError:
+            print('connection error!')
+            quit()
+        if 'token' in response.json():
+            token = response.json()['token']
+            print('login successful!')
+        else:
+            print('username or password wrong, try again!')
+    elif opt == 'u':
+        username = input('Enter username: ')
+        password = getpass.getpass(prompt="Enter password: ")
+        try:
+            resp = requests.post(signup_url, data={'username': username, 'password': password})
+        except requests.exceptions.ConnectionError:
+            print('connection error!')
+            quit()
+        if resp.ok:
+            token = resp.json()['token']
+        print(resp.json()['detail'])
+    elif opt == 'e':
+        print('bye bye..')
         quit()
-    if 'token' in response.json():
-        token = response.json()['token']
-        print('login successful!')
     else:
-        print('no such user!')
+        print('invalid option!')
 
 headers = {'Authorization': 'Token {}'.format(token)}
 
@@ -81,11 +101,12 @@ while True:
     elif choice == '5':
         pk = input('Enter the Book ID: ')
         resp = requests.get(url + 'book/{}/'.format(pk), headers=headers)
-        data = resp.json()
+        book = resp.json()
         if resp.ok:
-            print(data['title'], data['lc_classification'])
-            for author in data['authors']:
-                print(author['name'], author['surname'], author['birth_date'])
+            print('{} - {} - {}'.format(book['book_id'], book['title'], book['lc_classification']))
+            print('---------- Authors ----------')
+            for author in book['authors']:
+                print('{} - {}'.format(author['name'] + ' ' + author['surname'], author['birth_date']))
         else:
             print(data['detail'])
 
