@@ -67,7 +67,7 @@ class SignupView(APIView):
         password = request.POST.get('password')
         if User.objects.filter(username=username).exists():
             return Response({'detail': 'username already taken!'}, status=status.HTTP_400_BAD_REQUEST)
-        user = User.objects.create(username=username, password=password)
+        user = User.objects.create_user(username=username, password=password)
         return Response({'detail': 'signup successful!', 'token': user.auth_token.key})
 
 
@@ -484,7 +484,7 @@ class AuthorDetailOrUpdateView(APIView):
                 })
             data['books'] = books
             return Response(data)
-        return Response({'detail': 'no such author'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'no such author!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
         if not Author.objects.filter(pk=pk).exists():

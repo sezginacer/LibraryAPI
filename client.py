@@ -14,7 +14,7 @@ signup_url = url + 'signup/'
 
 token = None
 
-choices = """
+choices = '''
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =  1. Replace Library with New One  =
 =  2. Add new Library to Existing   =
@@ -25,13 +25,13 @@ choices = """
 =  7. Update Book                   =
 =  8. Update Author                 =
 =  9. Exit                          =
--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-"""
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'''
+
 while not token:
     opt = input('signin (i), signup (u) or exit (e): ')
     if opt == 'i':
         username = input('Enter your username: ')
-        password = getpass.getpass(prompt="Enter your password: ")
+        password = getpass.getpass(prompt='Enter your password: ')
         try:
             response = requests.post(token_url, data={'username': username, 'password': password})
         except requests.exceptions.ConnectionError:
@@ -44,7 +44,7 @@ while not token:
             print('username or password wrong, try again!')
     elif opt == 'u':
         username = input('Enter username: ')
-        password = getpass.getpass(prompt="Enter password: ")
+        password = getpass.getpass(prompt='Enter password: ')
         try:
             resp = requests.post(signup_url, data={'username': username, 'password': password})
         except requests.exceptions.ConnectionError:
@@ -69,8 +69,8 @@ while True:
         file_name = input('Enter the library file path: ')
         try:
             print('it may take long time, please wait..')
-            resp = requests.post(url + 'library/', headers=headers, files={"csv_data": open(file_name, 'r')})
-            print(resp.json()["detail"])
+            resp = requests.post(url + 'library/', headers=headers, files={'csv_data': open(file_name, 'r')})
+            print(resp.json()['detail'])
         except FileNotFoundError:
             print('{} file not found!'.format(file_name))
         except Exception:
@@ -80,8 +80,8 @@ while True:
         file_name = input('Enter the library file path: ')
         try:
             print('it may take long time, please wait..')
-            resp = requests.patch(url + 'library/', headers=headers, files={"csv_data": open(file_name, 'r')})
-            print(resp.json()["detail"])
+            resp = requests.patch(url + 'library/', headers=headers, files={'csv_data': open(file_name, 'r')})
+            print(resp.json()['detail'])
         except FileNotFoundError:
             print('{} file not found!'.format(file_name))
         except Exception:
@@ -98,11 +98,8 @@ while True:
 
     elif choice == '4':
         resp = requests.get(url + 'author/', headers=headers)
-        if len(resp.json()) == 0:
-            print('library is empty!')
-        else:
-            for author in resp.json():
-                print(author['name'], author['surname'], author['birth_date'])
+        for author in resp.json():
+            print(author['name'], author['surname'], author['birth_date'])
 
     elif choice == '5':
         pk = input('Enter the Book ID: ')
@@ -114,7 +111,7 @@ while True:
             for author in book['authors']:
                 print('{} - {}'.format(author['name'] + ' ' + author['surname'], author['birth_date']))
         else:
-            print(data['detail'])
+            print(book['detail'])
 
     elif choice == '6':
         pk = input('Enter the Author ID: ')
