@@ -9,7 +9,7 @@ urlpatterns = [
     url(r'^$', IndexView.as_view()),
     url(r'^login/$', LoginAPIView.as_view()),
     url(r'^logout/$', LogoutAPIView.as_view()),
-    url(r'^get_access_token/$', GetTokenView.as_view()),
+    url(r'^token/$', GetTokenView.as_view()),
     url(r'^library/$', LibraryView.as_view()),
     url(r'^book/$', BookListOrAddView.as_view()),
     url(r'^author/$', AuthorListOrAddView.as_view()),

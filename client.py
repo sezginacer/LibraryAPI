@@ -3,7 +3,7 @@ import requests
 import getpass
 
 url = 'http://localhost:8000/'
-token_url = url + 'get_access_token/'
+token_url = url + 'token/'
 token = None
 
 choices = """
