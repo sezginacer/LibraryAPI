@@ -27,18 +27,18 @@ class LoginAPIView(APIView):
 
     def post(self, request):
         if request.user.is_authenticated():
-            return Response({'error': 'already loggedin as {}'.format(request.user.username)},
+            return Response({'detail': 'already loggedin as {}'.format(request.user.username)},
                             status=status.HTTP_400_BAD_REQUEST)
         if 'username' not in request.POST or 'password' not in request.POST:
-            return Response({'error': 'username or password missing!'},
+            return Response({'detail': 'username or password missing!'},
                             status=status.HTTP_401_UNAUTHORIZED)
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
-            return Response({'detail': 'login successful!', 'token': user.auth_token.key})
-        return Response({'error': 'no such user!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'login successful!'})
+        return Response({'detail': 'no such user!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutAPIView(APIView):
@@ -50,7 +50,7 @@ class LogoutAPIView(APIView):
         if request.user.is_authenticated():
             logout(request)
             return Response({'detail': 'logout successful!'})
-        return Response({'error': 'no logout required'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'no logout required'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetTokenView(APIView):
@@ -64,7 +64,7 @@ class GetTokenView(APIView):
         user = authenticate(username=username, password=password)
         if user:
             return Response({'token': user.auth_token.key})
-        return Response({'error': 'authentication failed!'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'detail': 'authentication failed!'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class IndexView(APIView):
@@ -190,7 +190,7 @@ class LibraryView(APIView):
         Author.objects.all().delete()
         Book.objects.all().delete()
         if len(request.FILES) == 0:
-            return Response({'error': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({'detail': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
         csv_data = ''
         for f in request.FILES.values():
             csv_data += f.read().decode('utf-8').strip() + '\n'
@@ -215,12 +215,12 @@ class LibraryView(APIView):
             except Exception as err:
                 Author.objects.all().delete()
                 Book.objects.all().delete()
-                return Response({'error': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({'detail': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
         return Response({'detail': 'books and authors created successfully.'})
 
     def patch(self, request):
         if len(request.FILES) == 0:
-            return Response({'error': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({'detail': 'no csv file supplied!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
         csv_data = ''
         for f in request.FILES.values():
             csv_data += f.read().decode('utf-8').strip()
@@ -243,7 +243,7 @@ class LibraryView(APIView):
                     index += 3
                 b.save()
             except Exception as err:
-                return Response({'error': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response({'detail': err}, status=status.HTTP_406_NOT_ACCEPTABLE)
         return Response({'detail': 'books and authors created successfully.'})
 
 
@@ -279,7 +279,7 @@ class BookListOrAddView(APIView):
     def post(self, request):
         csv_data = request.POST.get('csv_data')
         if not csv_data:
-            return Response({'error': 'no csv_data posted!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'no csv_data posted!'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             data = csv_data.strip().split(',')
             b, _ = Book.objects.get_or_create(
@@ -297,9 +297,9 @@ class BookListOrAddView(APIView):
                 index += 3
             b.save()
         except IndexError:
-            return Response({'error': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError:
-            return Response({'error': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'book created successfully!'})
 
 
@@ -334,7 +334,7 @@ class AuthorListOrAddView(APIView):
     def post(self, request):
         csv_data = request.POST.get('csv_data')
         if not csv_data:
-            return Response({'error': 'no csv_data posted!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'no csv_data posted!'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             data = csv_data.strip().split(',')
             a, _ = Author.objects.get_or_create(
@@ -343,9 +343,9 @@ class AuthorListOrAddView(APIView):
                 birth_date=data[2]
             )
         except IndexError:
-            return Response({'error': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError:
-            return Response({'error': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'csv_data not appropriate!'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'author created successfully!'})
 
 
@@ -372,11 +372,11 @@ class BookDetailOrUpdateView(APIView):
                 })
             data['authors'] = authors
             return Response(data)
-        return Response({'error': 'no such book!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'no such book!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
         if not Book.objects.filter(pk=pk).exists():
-            return Response({'error': 'no such book!'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'no such book!'}, status=status.HTTP_404_NOT_FOUND)
         b = Book.objects.get(pk=pk)
         aus = [author for author in b.authors.all()]
         try:
@@ -396,16 +396,16 @@ class BookDetailOrUpdateView(APIView):
                 if author.books.count() == 1:
                     author.delete()
         except IntegrityError:
-            return Response({'error': 'attempt to add existing data!'},
+            return Response({'detail': 'attempt to add existing data!'},
                             status=status.HTTP_400_BAD_REQUEST)
         except Exception:
-            return Response({'error': 'failed to update object!'},
+            return Response({'detail': 'failed to update object!'},
                             status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'book updated successfully.'})
 
     def put(self, request, pk):
         if not Book.objects.filter(pk=pk).exists():
-            return Response({'error': 'no such book!'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'no such book!'}, status=status.HTTP_404_NOT_FOUND)
         b = Book.objects.get(pk=pk)
         aus = [author for author in b.authors.all()]
         try:
@@ -425,10 +425,10 @@ class BookDetailOrUpdateView(APIView):
                 if author.books.count():
                     author.delete()
         except IntegrityError:
-            return Response({'error': 'attempt to add existing book!'},
+            return Response({'detail': 'attempt to add existing book!'},
                             status=status.HTTP_400_BAD_REQUEST)
         except Exception:
-            return Response({'error': 'failed to update object!'},
+            return Response({'detail': 'failed to update object!'},
                             status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'book updated successfully.'})
 
@@ -456,11 +456,11 @@ class AuthorDetailOrUpdateView(APIView):
                 })
             data['books'] = books
             return Response(data)
-        return Response({'error': 'no such author'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'no such author'}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
         if not Author.objects.filter(pk=pk).exists():
-            return Response({'error': 'no such author!'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'no such author!'}, status=status.HTTP_404_NOT_FOUND)
         a = Author.objects.get(pk=pk)
         try:
             infos = request.data.get('infos').strip().split(',')
@@ -469,15 +469,15 @@ class AuthorDetailOrUpdateView(APIView):
             a.birth_date = datetime.strptime(infos[2], '%Y-%m-%d')
             a.save()
         except IntegrityError:
-            return Response({'error': 'attempt to add existing author!'},
+            return Response({'detail': 'attempt to add existing author!'},
                             status=status.HTTP_406_NOT_ACCEPTABLE)
         except Exception:
-            return Response({'error': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'author updated successfully!'})
 
     def put(self, request, pk):
         if not Author.objects.filter(pk=pk).exists():
-            return Response({'error': 'no such author!'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'no such author!'}, status=status.HTTP_404_NOT_FOUND)
         a = Author.objects.get(pk=pk)
         try:
             infos = request.data.get('infos').strip().split(',')
@@ -486,8 +486,8 @@ class AuthorDetailOrUpdateView(APIView):
             a.birth_date = datetime.strptime(infos[2], '%Y-%m-%d')
             a.save()
         except IntegrityError:
-            return Response({'error': 'attempt to add existing author!'},
+            return Response({'detail': 'attempt to add existing author!'},
                             status=status.HTTP_406_NOT_ACCEPTABLE)
         except Exception:
-            return Response({'error': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'failed to update author!'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'author updated successfully!'})

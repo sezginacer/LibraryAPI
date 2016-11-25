@@ -2,17 +2,22 @@
 import requests
 import getpass
 
-token_url = 'http://localhost:8000/get_access_token/'
+url = 'http://localhost:8000/'
+token_url = url + 'get_access_token/'
 token = None
 
 choices = """
--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
--  1. List Books                    -
--  2. Replace Library with New One  -
--  3. Add new Library to Existing   -
--  4. List Authors                  -
--  5. Exit                          -
--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=  1. Replace Library with New One  =
+=  2. Add new Library to Existing   =
+=  3. List Books                    =
+=  4. List Authors                  =
+=  5. View Book                     =
+=  6. View Author                   =
+=  7. Update Book                   =
+=  8. Update Author                 =
+=  9. Exit                          =
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 """
 while not token:
     username = input('Enter your username: ')
@@ -29,17 +34,91 @@ while not token:
         print('no such user!')
 
 headers = {'Authorization': 'Token {}'.format(token)}
+
 while True:
     print(choices)
     choice = input('Enter your choice: ')
-    if choice == '5':
-        print('bye bye..')
-        quit()
-    elif choice == '1':
-        response = requests.get('http://localhost:8000/book/', headers=headers)
-        for book in response.json():
-            print(50*'-')
+
+    if choice == '1':
+        file_name = input('Enter the library file path: ')
+        try:
+            print('it may take long time, please wait..')
+            resp = requests.post(url + 'library/', headers=headers, files={"csv_data": open(file_name, 'r')})
+            print(resp.json()["detail"])
+        except FileNotFoundError:
+            print('{} file not found!'.format(file_name))
+        except Exception:
+            print('an error occurred!')
+
+    elif choice == '2':
+        file_name = input('Enter the library file path: ')
+        try:
+            print('it may take long time, please wait..')
+            resp = requests.patch(url + 'library/', headers=headers, files={"csv_data": open(file_name, 'r')})
+            print(resp.json()["detail"])
+        except FileNotFoundError:
+            print('{} file not found!'.format(file_name))
+        except Exception:
+            print('an error occurred!')
+
+    elif choice == '3':
+        resp = requests.get(url + 'book/', headers=headers)
+        for book in resp.json():
+            print(50 * '-')
             print('{} - {} - {}'.format(book['book_id'], book['title'], book['lc_classification']))
             print('---------- Authors ----------')
             for author in book['authors']:
                 print('{} - {}'.format(author['name'] + ' ' + author['surname'], author['birth_date']))
+
+    elif choice == '4':
+        resp = requests.get(url + 'author/', headers=headers)
+        if len(resp.json()) == 0:
+            print('library is empty!')
+        else:
+            for author in resp.json():
+                print(author['name'], author['surname'], author['birth_date'])
+
+    elif choice == '5':
+        pk = input('Enter the Book ID: ')
+        resp = requests.get(url + 'book/{}/'.format(pk), headers=headers)
+        data = resp.json()
+        if resp.ok:
+            print(data['title'], data['lc_classification'])
+            for author in data['authors']:
+                print(author['name'], author['surname'], author['birth_date'])
+        else:
+            print(data['detail'])
+
+    elif choice == '6':
+        pk = input('Enter the Author ID: ')
+        resp = requests.get(url + 'author/{}/'.format(pk), headers=headers)
+        data = resp.json()
+        if resp.ok:
+            print(data['name'], data['surname'], data['birth_date'])
+        else:
+            print(data['detail'])
+
+    elif choice == '7':
+        pk = input('Enter the ID of the book you want to update: ')
+        data = input('Enter the book info seperated by commas: ')
+        data = data.strip().split(',')
+        data = [d.strip() for d in data]
+        data = ','.join(data)
+        resp = requests.put(url + 'book/{}/'.format(pk), data={'infos': data}, headers=headers)
+        print(resp.json()['detail'])
+
+    elif choice == '8':
+        pk = input('Enter the ID of author you want to update: ')
+        data = input('Enter the author info seperated by commas: ')
+        data = data.strip().split(',')
+        data = [d.strip() for d in data]
+        data = ','.join(data)
+        resp = requests.put(url + 'author/{}/'.format(pk), data={'infos': data}, headers=headers)
+        print(resp.json()['detail'])
+
+    elif choice == '9':
+        print('bye bye..')
+        quit()
+
+    else:
+        print('invalid option!')
