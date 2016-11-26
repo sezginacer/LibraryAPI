@@ -2,7 +2,7 @@ from django.conf.urls import url
 from main.views import (IndexView, LoginAPIView, LogoutAPIView, LibraryView,
                         BookListOrAddView, AuthorListOrAddView, BookDetailOrUpdateView,
                         AuthorDetailOrUpdateView, GetTokenView, SignupView)
-from rest_framework.urlpatterns import format_suffix_patterns
+# from rest_framework.urlpatterns import format_suffix_patterns
 
 
 urlpatterns = [
@@ -18,4 +18,5 @@ urlpatterns = [
     url(r'^author/(?P<pk>[0-9]+)/$', AuthorDetailOrUpdateView.as_view()),
 ]
 
-urlpatterns = format_suffix_patterns(urlpatterns)
+# urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json'])
+# http://localhost:8000/book.json/

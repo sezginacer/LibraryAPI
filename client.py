@@ -1,10 +1,6 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""You can run below Python commands in project's home directory to initially fill the database...
-import requests
-headers = {'Authorization': 'Token YOUR_API_ACCESS_TOKEN'}
-requests.post('http://127.0.0.1:8000/library/',
-              files={'csv': open('random-genrator/records.csv')}, headers=headers)
-"""
+
 import requests
 import getpass
 
