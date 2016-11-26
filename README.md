@@ -31,4 +31,6 @@ order to get token for registered user, `token/` endpoint can be used.
 First clone repo, then goto project's home directory and run `firstrun.sh`. This script creates
 virtual environment, activates it, installs project requirements, creates database schema, creates
 user with username `admin` and password `admin`, populates database with books and authors, finally
-runs the server. After running server, now `client.py` can be used to test Library API.
+runs the server. After running the server, now `client.py` can be used to test Library API. No need to
+run `firstrun.sh` for second time. Server can be started with `./manage.py runserver` or `./manage.py 
+runserver_plus` command after the first run.
