@@ -8,9 +8,9 @@ elif ! command -v virtualenv > /dev/null 2>&1; then
     echo "virtualenv not found, please install and try again!"
 else
     echo "creating virtualenv..."
-    virtualenv -p $(which python3) ../apienv > /dev/null
+    virtualenv -p $(which python3) venv > /dev/null
     echo "virtualenv created and activated"
-    source ../apienv/bin/activate
+    source venv/bin/activate
     pip install --upgrade virtualenv > /dev/null
     echo "installing requirements..."
     pip install -r requirements.txt > /dev/null
