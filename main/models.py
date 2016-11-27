@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 
 from rest_framework.authtoken.models import Token
+# import uuid
 # Create your models here.
 
 
@@ -12,6 +13,7 @@ class Author(models.Model):
     name = models.CharField(max_length=32)
     surname = models.CharField(max_length=32)
     birth_date = models.DateField(null=True)
+    # uuid = models.UUIDField(default=uuid.uuid4)
 
     def __str__(self):
         return self.name + ' ' + self.surname
@@ -25,6 +27,7 @@ class Book(models.Model):
     title = models.CharField(max_length=100, null=False)
     authors = models.ManyToManyField(Author, related_name='books')
     lc_classification = models.CharField(max_length=32)
+    # uuid = models.UUIDField(default=uuid.uuid4)
 
     def __str__(self):
         return self.title
