@@ -19,7 +19,7 @@ else
     ./manage.py migrate > /dev/null
     echo "db schema created"
     echo "creating user..."
-    ./manage.py runscript create_user --traceback
+    ./manage.py runscript create_user
     echo "username > admin"
     echo "password > admin"
     echo "user created"

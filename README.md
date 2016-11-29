@@ -33,4 +33,4 @@ virtual environment, activates it, installs project requirements, creates databa
 user with username `admin` and password `admin`, populates database with books and authors, finally
 runs the server. After running the server, now `client.py` can be used to test Library API. No need to
 run `firstrun.sh` for second time. Server can be started with `./manage.py runserver` or `./manage.py 
-runserver_plus` command after the first run.
+runserver_plus` command after the first run. Please note that both server and client apps should run on `Python 3.5`.
