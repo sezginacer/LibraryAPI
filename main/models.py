@@ -16,7 +16,11 @@ class Author(models.Model):
     # uuid = models.UUIDField(default=uuid.uuid4)
 
     def __str__(self):
-        return self.name + ' ' + self.surname
+        return '{} {} - {}'.format(self.name, self.surname, self.birth_date)
+
+    @property
+    def full_name(self):
+        return '{} {}'.format(self.name, self.surname)
 
     class Meta:
         unique_together = ('name', 'surname', 'birth_date')
